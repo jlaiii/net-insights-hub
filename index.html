@@ -1,158 +1,160 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Net Insights Hub</title>
 <style>
-:root{--bg:#0b0f19;--card:#111827;--text:#e2e8f0;--muted:#94a3b8;--accent:#22d3ee;--accent2:#a78bfa;--danger:#f87171;--success:#34d399;--warning:#fbbf24;--border:#1f2937}
+:root{--bg:#0f1117;--surface:#181b21;--text:#e8ecf1;--muted:#9aa3b2;--accent:#4fc1e9;--accent2:#a78bfa;--danger:#ef4444;--success:#22c55e;--warning:#f59e0b;--border:#252a33}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
-header{text-align:center;padding:3rem 1rem 2rem;background:linear-gradient(135deg,#0f172a 0%,#1e293b 100%);border-bottom:1px solid var(--border);position:relative;overflow:hidden}
-header::before{content:'';position:absolute;top:-50%;left:-50%;right:-50%;bottom:-50%;background:radial-gradient(circle,rgba(34,211,238,0.08) 0%,transparent 70%);animation:pulse 8s ease-in-out infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-header h1{font-size:2.5rem;font-weight:800;letter-spacing:-0.02em;position:relative}
-header h1 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-header p{color:var(--muted);margin-top:0.5rem;max-width:600px;margin-inline:auto;position:relative}
-.visit-counter{display:inline-flex;align-items:center;gap:0.5rem;background:var(--card);border:1px solid var(--border);padding:0.4rem 1rem;border-radius:999px;margin-top:1rem;font-size:0.875rem;color:var(--accent);position:relative}
-.container{max-width:1200px;margin:0 auto;padding:2rem 1rem}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem}
-.card{background:var(--card);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;transition:transform .2s,border-color .2s;position:relative;overflow:hidden}
-.card:hover{transform:translateY(-2px);border-color:#334155}
-.card h2{font-size:1.1rem;font-weight:600;margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
-.card h2 .icon{font-size:1.3rem}
-.row{display:flex;justify-content:space-between;align-items:center;padding:0.5rem 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Oxygen,Ubuntu,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+header{text-align:center;padding:3.5rem 1rem 2.5rem;background:radial-gradient(ellipse at top,#1a2233 0%,var(--bg) 70%);border-bottom:1px solid var(--border)}
+header h1{font-size:2.6rem;font-weight:800;letter-spacing:-0.025em}
+header h1 .accent{color:var(--accent)}
+header p{color:var(--muted);margin-top:0.5rem;max-width:560px;margin-inline:auto;font-size:1rem}
+.meta{display:inline-flex;align-items:center;gap:1rem;background:var(--surface);border:1px solid var(--border);padding:0.5rem 1.25rem;border-radius:999px;margin-top:1.25rem;font-size:0.875rem;color:var(--muted)}
+.meta a{color:var(--accent);text-decoration:none;font-weight:500}
+.meta a:hover{text-decoration:underline}
+.container{max-width:1160px;margin:0 auto;padding:2rem 1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:1.25rem}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:0.75rem;padding:1.5rem}
+.card h2{font-size:0.95rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:var(--accent);margin-bottom:1rem;display:flex;align-items:center;gap:0.5rem}
+.card h2 .icon{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:0.75rem;background:rgba(79,193,233,0.1);border:1px solid rgba(79,193,233,0.2);border-radius:4px;color:var(--accent)}
+.row{display:flex;justify-content:space-between;align-items:center;padding:0.55rem 0;border-bottom:1px solid rgba(255,255,255,0.04)}
 .row:last-child{border-bottom:none}
-.row .label{color:var(--muted);font-size:0.875rem}
-.row .value{font-weight:500;font-size:0.875rem;text-align:right;word-break:break-word}
-.value.ip{color:var(--accent);font-family:monospace;font-size:1rem}
+.row .label{color:var(--muted);font-size:0.82rem}
+.row .value{font-weight:500;font-size:0.82rem;text-align:right;word-break:break-word;max-width:60%}
+.value.ip{color:var(--accent);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:0.9rem}
 .value.good{color:var(--success)}
 .value.warn{color:var(--warning)}
 .value.bad{color:var(--danger)}
-.btn{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#0b0f19;border:none;padding:0.75rem 1.5rem;border-radius:0.5rem;font-weight:700;cursor:pointer;font-size:0.95rem;transition:opacity .2s;display:inline-flex;align-items:center;gap:0.5rem}
-.btn:hover{opacity:0.9}
+.btn{background:var(--accent);color:#0f1117;border:none;padding:0.65rem 1.25rem;border-radius:0.4rem;font-weight:700;cursor:pointer;font-size:0.9rem;transition:filter .15s;display:inline-flex;align-items:center;gap:0.4rem}
+.btn:hover{filter:brightness(1.1)}
 .btn:disabled{opacity:0.5;cursor:not-allowed}
-.progress-bar{width:100%;height:8px;background:#1f2937;border-radius:4px;overflow:hidden;margin-top:0.5rem}
-.progress-bar .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s ease}
-.speed-result{font-size:2rem;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.fingerprint-hash{font-family:monospace;font-size:0.8rem;color:var(--accent);background:rgba(34,211,238,0.08);padding:0.5rem;border-radius:0.5rem;word-break:break-all;margin-top:0.5rem}
-.loader{display:inline-block;width:16px;height:16px;border:2px solid var(--muted);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+.progress-bar{width:100%;height:6px;background:#252a33;border-radius:3px;overflow:hidden;margin-top:0.5rem}
+.progress-bar .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .25s ease}
+.speed-result{font-size:2.2rem;font-weight:800;color:var(--accent)}
+.fingerprint-hash{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:0.78rem;color:var(--accent);background:rgba(79,193,233,0.06);padding:0.6rem;border-radius:0.4rem;word-break:break-all;margin-top:0.5rem;border:1px solid rgba(79,193,233,0.12)}
+.loader{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:0.4rem}
-.status-dot.online{background:var(--success);box-shadow:0 0 8px var(--success)}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:0.35rem}
+.status-dot.online{background:var(--success);box-shadow:0 0 6px var(--success)}
 .status-dot.offline{background:var(--danger)}
-footer{text-align:center;padding:2rem;color:var(--muted);font-size:0.8rem;border-top:1px solid var(--border);margin-top:2rem}
-.map-wrap{width:100%;height:160px;border-radius:0.5rem;overflow:hidden;margin-top:0.75rem;background:#0b0f19;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
+footer{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:0.78rem;border-top:1px solid var(--border);margin-top:1rem}
+.map-wrap{width:100%;height:150px;border-radius:0.4rem;overflow:hidden;margin-top:0.6rem;background:#0f1117;display:flex;align-items:center;justify-content:center;border:1px solid var(--border)}
 .map-wrap iframe{width:100%;height:100%;border:0}
 .hidden{display:none!important}
-@media(max-width:480px){header h1{font-size:1.6rem}.grid{grid-template-columns:1fr}}
+.link-bar{margin-top:0.75rem;display:flex;justify-content:center;gap:1rem;font-size:0.85rem}
+.link-bar a{color:var(--accent);text-decoration:none;font-weight:500}
+.link-bar a:hover{text-decoration:underline}
+@media(max-width:480px){header h1{font-size:1.7rem}.grid{grid-template-columns:1fr}.link-bar{flex-direction:column;gap:0.25rem}}
 </style>
 </head>
 <body>
 <header>
-<h1><span>Net Insights</span> Hub</h1>
-<p>Discover what the internet sees about you.</p>
-<div class="visit-counter" id="visitCounter"><span class="loader"></span> Loading visits...</div>
-  <div style="margin-top:0.75rem;position:relative;z-index:1">
-    <a href="https://github.com/jlaiii/net-insights-hub" target="_blank" style="color:var(--accent);text-decoration:none;font-size:0.85rem;font-weight:500">&#128279; View on GitHub</a>
-    <span style="color:var(--muted);margin:0 0.5rem">|</span>
-    <a href="https://jlaiii.github.io/net-insights-hub/" target="_blank" style="color:var(--accent);text-decoration:none;font-size:0.85rem;font-weight:500">&#127760; Live Site</a>
-  </div>
+<h1>Net Insights <span class="accent">Hub</span></h1>
+<p>A professional network and browser intelligence dashboard. No cookies. No tracking.</p>
+<div class="meta" id="visitCounter"><span class="loader"></span> Loading visits...</div>
+<div class="link-bar">
+  <a href="https://github.com/jlaiii/net-insights-hub" target="_blank">View on GitHub</a>
+  <span style="color:var(--muted)">|</span>
+  <a href="https://jlaiii.github.io/net-insights-hub/" target="_blank">Live Site</a>
+</div>
 </header>
 <div class="container">
 <div class="grid">
 <div class="card" id="ipCard">
-<h2><span class="icon">&#127760;</span> IP &amp; Location</h2>
-<div class="row"><span class="label">IP Address</span><span class="value ip" id="ipAddr">—</span></div>
-<div class="row"><span class="label">ISP / Org</span><span class="value" id="isp">—</span></div>
-<div class="row"><span class="label">City</span><span class="value" id="city">—</span></div>
-<div class="row"><span class="label">Region</span><span class="value" id="region">—</span></div>
-<div class="row"><span class="label">Country</span><span class="value" id="country">—</span></div>
-<div class="row"><span class="label">Timezone</span><span class="value" id="tz">—</span></div>
-<div class="row"><span class="label">Coordinates</span><span class="value" id="coords">—</span></div>
+<h2><span class="icon">IP</span> IP & Location</h2>
+<div class="row"><span class="label">IP Address</span><span class="value ip" id="ipAddr">--</span></div>
+<div class="row"><span class="label">ISP / Org</span><span class="value" id="isp">--</span></div>
+<div class="row"><span class="label">City</span><span class="value" id="city">--</span></div>
+<div class="row"><span class="label">Region</span><span class="value" id="region">--</span></div>
+<div class="row"><span class="label">Country</span><span class="value" id="country">--</span></div>
+<div class="row"><span class="label">Timezone</span><span class="value" id="tz">--</span></div>
+<div class="row"><span class="label">Coordinates</span><span class="value" id="coords">--</span></div>
 <div class="map-wrap" id="mapWrap">Map loading...</div>
 </div>
 <div class="card">
-<h2><span class="icon">&#128187;</span> Browser &amp; System</h2>
-<div class="row"><span class="label">Browser</span><span class="value" id="browser">—</span></div>
-<div class="row"><span class="label">OS</span><span class="value" id="os">—</span></div>
-<div class="row"><span class="label">Language</span><span class="value" id="lang">—</span></div>
-<div class="row"><span class="label">Screen</span><span class="value" id="screenRes">—</span></div>
-<div class="row"><span class="label">Viewport</span><span class="value" id="viewport">—</span></div>
-<div class="row"><span class="label">Color Depth</span><span class="value" id="colorDepth">—</span></div>
-<div class="row"><span class="label">Touch Support</span><span class="value" id="touch">—</span></div>
-<div class="row"><span class="label">Cookies Enabled</span><span class="value" id="cookies">—</span></div>
-<div class="row"><span class="label">Do Not Track</span><span class="value" id="dnt">—</span></div>
-<div class="row"><span class="label">PDF Viewer</span><span class="value" id="pdfViewer">—</span></div>
+<h2><span class="icon">BR</span> Browser & System</h2>
+<div class="row"><span class="label">Browser</span><span class="value" id="browser">--</span></div>
+<div class="row"><span class="label">OS</span><span class="value" id="os">--</span></div>
+<div class="row"><span class="label">Language</span><span class="value" id="lang">--</span></div>
+<div class="row"><span class="label">Screen</span><span class="value" id="screenRes">--</span></div>
+<div class="row"><span class="label">Viewport</span><span class="value" id="viewport">--</span></div>
+<div class="row"><span class="label">Color Depth</span><span class="value" id="colorDepth">--</span></div>
+<div class="row"><span class="label">Touch Support</span><span class="value" id="touch">--</span></div>
+<div class="row"><span class="label">Cookies Enabled</span><span class="value" id="cookies">--</span></div>
+<div class="row"><span class="label">Do Not Track</span><span class="value" id="dnt">--</span></div>
+<div class="row"><span class="label">PDF Viewer</span><span class="value" id="pdfViewer">--</span></div>
 </div>
 <div class="card">
-<h2><span class="icon">&#9881;&#65039;</span> Hardware</h2>
-<div class="row"><span class="label">CPU Cores</span><span class="value" id="cores">—</span></div>
-<div class="row"><span class="label">Device Memory</span><span class="value" id="memory">—</span></div>
-<div class="row"><span class="label">Platform</span><span class="value" id="platform">—</span></div>
-<div class="row"><span class="label">User Agent</span><span class="value" id="ua" style="font-size:0.75rem;max-width:55%">—</span></div>
+<h2><span class="icon">HW</span> Hardware</h2>
+<div class="row"><span class="label">CPU Cores</span><span class="value" id="cores">--</span></div>
+<div class="row"><span class="label">Device Memory</span><span class="value" id="memory">--</span></div>
+<div class="row"><span class="label">Platform</span><span class="value" id="platform">--</span></div>
+<div class="row"><span class="label">User Agent</span><span class="value" id="ua" style="font-size:0.72rem;max-width:58%">--</span></div>
 </div>
 <div class="card">
-<h2><span class="icon">&#128225;</span> Network</h2>
+<h2><span class="icon">NW</span> Network</h2>
 <div class="row"><span class="label">Online Status</span><span class="value" id="online"><span class="status-dot online"></span>Online</span></div>
-<div class="row"><span class="label">Connection Type</span><span class="value" id="connType">—</span></div>
-<div class="row"><span class="label">Downlink (est.)</span><span class="value" id="downlink">—</span></div>
-<div class="row"><span class="label">Effective Type</span><span class="value" id="effType">—</span></div>
-<div class="row"><span class="label">RTT</span><span class="value" id="rtt">—</span></div>
-<div class="row"><span class="label">Save Data</span><span class="value" id="saveData">—</span></div>
+<div class="row"><span class="label">Connection Type</span><span class="value" id="connType">--</span></div>
+<div class="row"><span class="label">Downlink (est.)</span><span class="value" id="downlink">--</span></div>
+<div class="row"><span class="label">Effective Type</span><span class="value" id="effType">--</span></div>
+<div class="row"><span class="label">RTT</span><span class="value" id="rtt">--</span></div>
+<div class="row"><span class="label">Save Data</span><span class="value" id="saveData">--</span></div>
 </div>
 <div class="card" style="grid-column:span 2">
-<h2><span class="icon">&#128640;</span> Speed Test</h2>
-<p style="color:var(--muted);font-size:0.875rem;margin-bottom:1rem">Measures approximate download speed by fetching a test payload from a CDN.</p>
-<div id="speedIdle"><button class="btn" id="startSpeed" onclick="runSpeedTest()">&#9654; Start Speed Test</button></div>
+<h2><span class="icon">SP</span> Speed Test</h2>
+<p style="color:var(--muted);font-size:0.85rem;margin-bottom:1rem">Measures approximate download speed by fetching a test payload from Cloudflare's edge network.</p>
+<div id="speedIdle"><button class="btn" id="startSpeed" onclick="runSpeedTest()">Start Speed Test</button></div>
 <div id="speedRunning" class="hidden">
 <div class="progress-bar"><div class="fill" id="speedBar"></div></div>
-<p style="margin-top:0.5rem;color:var(--muted);font-size:0.875rem">Testing... <span id="speedPhase">preparing</span></p>
+<p style="margin-top:0.5rem;color:var(--muted);font-size:0.85rem">Testing... <span id="speedPhase">preparing</span></p>
 </div>
 <div id="speedDone" class="hidden" style="margin-top:1rem">
 <div class="speed-result" id="speedResult">0 Mbps</div>
-<p style="color:var(--muted);font-size:0.8rem">Latency: <span id="latencyResult">—</span> &nbsp;|&nbsp; Test size: <span id="testSize">—</span></p>
-<button class="btn" style="margin-top:0.75rem" onclick="runSpeedTest()">&#8635; Test Again</button>
+<p style="color:var(--muted);font-size:0.78rem">Latency: <span id="latencyResult">--</span> &nbsp;|&nbsp; Test size: <span id="testSize">--</span></p>
+<button class="btn" style="margin-top:0.75rem" onclick="runSpeedTest()">Test Again</button>
 </div>
 </div>
 <div class="card">
-<h2><span class="icon">&#128070;</span> Browser Fingerprint</h2>
-<p style="color:var(--muted);font-size:0.875rem;margin-bottom:0.75rem">A unique hash derived from your browser and hardware traits. No cookies required.</p>
+<h2><span class="icon">FP</span> Browser Fingerprint</h2>
+<p style="color:var(--muted);font-size:0.82rem;margin-bottom:0.6rem">A unique hash derived from browser and hardware traits. No cookies required.</p>
 <div class="fingerprint-hash" id="fpHash">Computing...</div>
-<div class="row" style="margin-top:0.75rem"><span class="label">Canvas</span><span class="value" id="canvasFP">—</span></div>
-<div class="row"><span class="label">WebGL Vendor</span><span class="value" id="webglVendor">—</span></div>
-<div class="row"><span class="label">WebGL Renderer</span><span class="value" id="webglRenderer">—</span></div>
-<div class="row"><span class="label">Plugins Count</span><span class="value" id="plugins">—</span></div>
-<div class="row"><span class="label">Fonts (basic)</span><span class="value" id="fonts">—</span></div>
+<div class="row" style="margin-top:0.6rem"><span class="label">Canvas</span><span class="value" id="canvasFP">--</span></div>
+<div class="row"><span class="label">WebGL Vendor</span><span class="value" id="webglVendor">--</span></div>
+<div class="row"><span class="label">WebGL Renderer</span><span class="value" id="webglRenderer">--</span></div>
+<div class="row"><span class="label">Plugins Count</span><span class="value" id="plugins">--</span></div>
+<div class="row"><span class="label">Fonts (basic)</span><span class="value" id="fonts">--</span></div>
 </div>
 <div class="card">
-<h2><span class="icon">&#128267;</span> Battery</h2>
-<div class="row"><span class="label">Level</span><span class="value" id="batteryLevel">—</span></div>
-<div class="row"><span class="label">Charging</span><span class="value" id="charging">—</span></div>
-<div class="row"><span class="label">Time Remaining</span><span class="value" id="timeRemaining">—</span></div>
+<h2><span class="icon">BT</span> Battery</h2>
+<div class="row"><span class="label">Level</span><span class="value" id="batteryLevel">--</span></div>
+<div class="row"><span class="label">Charging</span><span class="value" id="charging">--</span></div>
+<div class="row"><span class="label">Time Remaining</span><span class="value" id="timeRemaining">--</span></div>
 </div>
 <div class="card">
-<h2><span class="icon">&#128737;&#65039;</span> Privacy Checks</h2>
-<div class="row"><span class="label">Ad Blocker</span><span class="value" id="adblock">—</span></div>
-<div class="row"><span class="label">WebRTC Leak</span><span class="value" id="webrtcLeak">—</span></div>
-<div class="row"><span class="label">VPN / Proxy hint</span><span class="value" id="vpnHint">—</span></div>
-<div class="row"><span class="label">Tor Exit Node</span><span class="value" id="torExit">—</span></div>
+<h2><span class="icon">PR</span> Privacy Checks</h2>
+<div class="row"><span class="label">Ad Blocker</span><span class="value" id="adblock">--</span></div>
+<div class="row"><span class="label">WebRTC Leak</span><span class="value" id="webrtcLeak">--</span></div>
+<div class="row"><span class="label">VPN / Proxy hint</span><span class="value" id="vpnHint">--</span></div>
+<div class="row"><span class="label">Tor Exit Node</span><span class="value" id="torExit">--</span></div>
 </div>
 <div class="card">
-<h2><span class="icon">&#128202;</span> Session</h2>
-<div class="row"><span class="label">Page Load Time</span><span class="value" id="loadTime">—</span></div>
-<div class="row"><span class="label">Referrer</span><span class="value" id="referrer">—</span></div>
-<div class="row"><span class="label">Local Time</span><span class="value" id="localTime">—</span></div>
-<div class="row"><span class="label">Session Start</span><span class="value" id="sessionStart">—</span></div>
+<h2><span class="icon">SS</span> Session</h2>
+<div class="row"><span class="label">Page Load Time</span><span class="value" id="loadTime">--</span></div>
+<div class="row"><span class="label">Referrer</span><span class="value" id="referrer">--</span></div>
+<div class="row"><span class="label">Local Time</span><span class="value" id="localTime">--</span></div>
+<div class="row"><span class="label">Session Start</span><span class="value" id="sessionStart">--</span></div>
 <div class="row"><span class="label">Clicks This Session</span><span class="value" id="clicks">0</span></div>
 <div class="row"><span class="label">Keystrokes</span><span class="value" id="keys">0</span></div>
 </div>
 </div>
 </div>
 <footer>
-Built with vanilla JS for <a href="https://github.com/jlaiii/net-insights-hub" style="color:var(--accent);text-decoration:none">net-insights-hub</a> — no tracking cookies, no frameworks.
+Built with vanilla JS for <a href="https://github.com/jlaiii/net-insights-hub" style="color:var(--accent);text-decoration:none">net-insights-hub</a> -- no tracking cookies, no frameworks.
 </footer>
-test
 <script>
 const $ = id => document.getElementById(id);
 const set = (id, text, cls) => { const el = $(id); if (!el) return; el.textContent = text; if (cls) el.className = 'value ' + cls; };
@@ -172,17 +174,18 @@ async function fetchIP() {
     if (data.latitude) {
       $('mapWrap').innerHTML = '<iframe loading="lazy" allowfullscreen src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d30000!2d' + data.longitude + '!3d' + data.latitude + '!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1" style="filter:invert(90%) hue-rotate(180deg)"></iframe>';
     }
-    if (data.threat &amp;&amp; (data.threat.proxy || data.threat.vpn || data.threat.tor)) {
+    if (data.threat && (data.threat.proxy || data.threat.vpn || data.threat.tor)) {
       set('vpnHint', data.threat.vpn ? 'Possible VPN detected' : data.threat.proxy ? 'Proxy detected' : 'Suspicious');
       $('vpnHint').className = 'value warn';
     } else {
       set('vpnHint', 'No proxy/VPN indicators');
       $('vpnHint').className = 'value good';
     }
-    if (data.threat &amp;&amp; data.threat.tor) { set('torExit', 'Possible Tor exit'); $('torExit').className = 'value warn'; }
+    if (data.threat && data.threat.tor) { set('torExit', 'Possible Tor exit'); $('torExit').className = 'value warn'; }
     else { set('torExit', 'Not detected'); $('torExit').className = 'value good'; }
   } catch (e) {
-    set('ipAddr', 'Unavailable'); set('isp', 'API error');
+    set('ipAddr', 'Unavailable');
+    set('isp', 'API error');
   }
 }
 fetchIP();
@@ -193,7 +196,7 @@ function getBrowser() {
   if (ua.includes('Firefox/')) return 'Firefox ' + m(/Firefox\/(\d+\.\d+)/);
   if (ua.includes('Edg/')) return 'Edge ' + m(/Edg\/(\d+\.\d+)/);
   if (ua.includes('Chrome/')) return 'Chrome ' + m(/Chrome\/(\d+\.\d+)/);
-  if (ua.includes('Safari/') &amp;&amp; !ua.includes('Chrome')) return 'Safari ' + m(/Version\/(\d+\.\d+)/);
+  if (ua.includes('Safari/') && !ua.includes('Chrome')) return 'Safari ' + m(/Version\/(\d+\.\d+)/);
   if (ua.includes('Opera') || ua.includes('OPR')) return 'Opera ' + m(/OPR\/(\d+\.\d+)/);
   return 'Unknown';
 }
@@ -202,7 +205,7 @@ function getOS() {
   if (ua.includes('Win')) return 'Windows' + (ua.includes('Windows NT 10.0') ? ' 10/11' : '');
   if (ua.includes('Mac')) return 'macOS';
   if (ua.includes('Linux')) return 'Linux';
-  if (ua.includes('Android')) return 'Android ' + (ua.match(/Android\s([\d\.]+)/)?.[1] || '');
+  if (ua.includes('Android')) return 'Android ' + (ua.match(/Android\s([\d\.]+)/) || ['',''])[1];
   if (ua.includes('iPhone') || ua.includes('iPad')) return 'iOS';
   return 'Unknown';
 }
@@ -345,7 +348,7 @@ function computeFingerprint() {
   set('canvasFP', canvas.slice(0, 20) + '...');
   set('webglVendor', webgl.vendor);
   set('webglRenderer', webgl.renderer);
-  set('plugins', (navigator.plugins?.length || 0).toString());
+  set('plugins', (navigator.plugins ? navigator.plugins.length : 0).toString());
   set('fonts', fonts || 'Unknown');
 }
 computeFingerprint();
@@ -391,7 +394,7 @@ async function checkWebRTC() {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
     setTimeout(() => {
-      const lines = (pc.localDescription?.sdp || '').split('\\n');
+      const lines = (pc.localDescription ? pc.localDescription.sdp : '').split('\n');
       const ips = lines.filter(l => l.includes('candidate')).map(l => {
         const m = l.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
         return m ? m[0] : null;
@@ -410,7 +413,7 @@ async function fetchVisits() {
     await fetch('https://api.countapi.xyz/hit/' + ns + '/' + key);
     const res = await fetch('https://api.countapi.xyz/get/' + ns + '/' + key);
     const data = await res.json();
-    $('visitCounter').innerHTML = 'Visits: <strong>' + (data.value || 0).toLocaleString() + '</strong>';
+    $('visitCounter').innerHTML = 'Visits: ' + (data.value || 0).toLocaleString();
   } catch(e) {
     $('visitCounter').innerHTML = 'Visit counter unavailable';
   }
