@@ -150,8 +150,10 @@ footer{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:0.78re
 <h2><span class="icon">PR</span> Privacy Checks</h2>
 <div class="row"><span class="label">Ad Blocker</span><span class="value" id="adblock">--</span></div>
 <div class="row"><span class="label">WebRTC Leak</span><span class="value" id="webrtcLeak">--</span></div>
-<div class="row"><span class="label">VPN / Proxy hint</span><span class="value" id="vpnHint">--</span></div>
+<div class="row"><span class="label">Detected Public IPs</span><span class="value ip" id="detectedIPs">--</span></div>
+<div class="row"><span class="label">VPN / Proxy hint</span><span class="value" id="vpnHint">Checking...</span></div>
 <div class="row"><span class="label">Tor Exit Node</span><span class="value" id="torExit">--</span></div>
+<div style="margin-top:0.75rem"><button class="btn" onclick="runPrivacyScan()">Re-run Privacy Scan</button></div>
 </div>
 <div class="card">
 <h2><span class="icon">SS</span> Session</h2>
@@ -204,11 +206,16 @@ function getIPv4FromMapped(ip) {
   return null;
 }
 
+let detectedPublicIP = null;
+let detectedIPSources = [];
+
 async function fetchIP() {
   try {
     const res = await fetch('https://ipapi.co/json/');
     const data = await res.json();
     const ip = data.ip || 'Unavailable';
+    detectedPublicIP = ip;
+    detectedIPSources.push({ source: 'ipapi.co', ip: ip });
     set('ipAddr', ip, 'ip');
     set('isp', data.org || data.asn || 'Unknown');
     set('city', data.city || 'Unknown');
@@ -234,21 +241,111 @@ async function fetchIP() {
     if (data.latitude) {
       $('mapWrap').innerHTML = '<iframe loading="lazy" allowfullscreen src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d30000!2d' + data.longitude + '!3d' + data.latitude + '!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1" style="filter:invert(90%) hue-rotate(180deg)"></iframe>';
     }
-    if (data.threat && (data.threat.proxy || data.threat.vpn || data.threat.tor)) {
-      set('vpnHint', data.threat.vpn ? 'Possible VPN detected' : data.threat.proxy ? 'Proxy detected' : 'Suspicious');
-      $('vpnHint').className = 'value warn';
-    } else {
-      set('vpnHint', 'No proxy/VPN indicators');
-      $('vpnHint').className = 'value good';
-    }
     if (data.threat && data.threat.tor) { set('torExit', 'Possible Tor exit'); $('torExit').className = 'value warn'; }
     else { set('torExit', 'Not detected'); $('torExit').className = 'value good'; }
+
+    // Start cross-checks after we have the base IP
+    crossCheckIP(ip, data.timezone);
   } catch (e) {
     set('ipAddr', 'Unavailable');
     set('isp', 'API error');
   }
 }
 fetchIP();
+
+function isPrivateIP(ip) {
+  if (!ip) return false;
+  if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.')) {
+    const parts = ip.split('.');
+    if (parts.length === 4) {
+      const second = parseInt(parts[1], 10);
+      if (ip.startsWith('172.') && (second >= 16 && second <= 31)) return true;
+    }
+    if (ip.startsWith('192.168.') || ip.startsWith('10.')) return true;
+  }
+  if (ip === '127.0.0.1' || ip === '::1' || ip === '0:0:0:0:0:0:0:1') return true;
+  if (ip.startsWith('fc') || ip.startsWith('fd')) return true;
+  return false;
+}
+
+async function crossCheckIP(ipapiIP, ipapiTZ) {
+  const reasons = [];
+  let vpnDetected = false;
+
+  // Method 1: Check ipify.org for a second opinion
+  try {
+    const res = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+    const data = await res.json();
+    const ipifyIP = data.ip;
+    detectedIPSources.push({ source: 'ipify.org', ip: ipifyIP });
+    if (ipifyIP !== ipapiIP) {
+      reasons.push('IP mismatch: ipify (' + ipifyIP + ') vs ipapi (' + ipapiIP + ')');
+      vpnDetected = true;
+    }
+  } catch(e) {}
+
+  // Method 2: Timezone mismatch
+  try {
+    const browserTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (ipapiTZ && browserTZ && ipapiTZ !== browserTZ) {
+      reasons.push('Timezone mismatch: browser (' + browserTZ + ') vs IP (' + ipapiTZ + ')');
+      vpnDetected = true;
+    }
+  } catch(e) {}
+
+  // Method 3: Wait for WebRTC results then compare
+  setTimeout(() => {
+    const webrtcIPs = (window.__webrtcPublicIPs || []).filter(ip => !isPrivateIP(ip));
+    if (webrtcIPs.length > 0) {
+      detectedIPSources.push(...webrtcIPs.map(ip => ({ source: 'WebRTC', ip: ip })));
+      const unmatched = webrtcIPs.filter(ip => ip !== ipapiIP);
+      if (unmatched.length > 0) {
+        reasons.push('WebRTC exposes different public IP: ' + unmatched.join(', '));
+        vpnDetected = true;
+      }
+    }
+    updateDetectedIPs();
+    updateVPNHint(vpnDetected, reasons);
+  }, 2500);
+}
+
+function updateDetectedIPs() {
+  const unique = [];
+  const seen = new Set();
+  for (const src of detectedIPSources) {
+    if (!seen.has(src.ip)) {
+      seen.add(src.ip);
+      unique.push(src.ip);
+    }
+  }
+  if (unique.length > 0) {
+    set('detectedIPs', unique.join(', '));
+  } else {
+    set('detectedIPs', 'None detected');
+  }
+}
+
+function updateVPNHint(detected, reasons) {
+  if (detected) {
+    const msg = reasons.length > 0 ? 'Possible VPN/Proxy (' + reasons.length + ')' : 'Possible VPN/Proxy';
+    set('vpnHint', msg);
+    $('vpnHint').className = 'value warn';
+    $('vpnHint').title = reasons.join('; ');
+  } else {
+    set('vpnHint', 'No proxy/VPN indicators');
+    $('vpnHint').className = 'value good';
+    $('vpnHint').title = '';
+  }
+}
+
+function runPrivacyScan() {
+  set('vpnHint', 'Checking...');
+  $('vpnHint').className = 'value';
+  detectedIPSources = [];
+  detectedPublicIP = null;
+  checkWebRTC();
+  fetchIP();
+}
 
 function getBrowser() {
   const ua = navigator.userAgent;
@@ -504,12 +601,19 @@ async function checkWebRTC() {
     await pc.setLocalDescription(offer);
     setTimeout(() => {
       const lines = (pc.localDescription ? pc.localDescription.sdp : '').split('\n');
-      const ips = lines.filter(l => l.includes('candidate')).map(l => {
-        const m = l.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
-        return m ? m[0] : null;
-      }).filter(Boolean);
-      const hasLocal = ips.some(ip => ip.startsWith('192.') || ip.startsWith('10.') || ip.startsWith('172.'));
-      set('webrtcLeak', hasLocal ? 'Local IP exposed (' + ips.length + ')' : 'No local leak');
+      const allIPs = [];
+      const candidateLines = lines.filter(l => l.includes('candidate'));
+      for (const line of candidateLines) {
+        // Try IPv4
+        const ipv4m = line.match(/([0-9]{1,3}\.){3}[0-9]{1,3}/);
+        if (ipv4m) allIPs.push(ipv4m[0]);
+        // Try IPv6 in candidate
+        const ipv6m = line.match(/([0-9a-fA-F]{1,4}:){2,}[0-9a-fA-F]{1,4}/);
+        if (ipv6m) allIPs.push(ipv6m[0]);
+      }
+      window.__webrtcPublicIPs = allIPs.filter(ip => !isPrivateIP(ip));
+      const hasLocal = allIPs.some(ip => isPrivateIP(ip));
+      set('webrtcLeak', hasLocal ? 'Local IP exposed' : 'No local leak');
       if (hasLocal) $('webrtcLeak').className = 'value warn'; else $('webrtcLeak').className = 'value good';
     }, 1000);
   } catch(e) { set('webrtcLeak', 'Check failed'); }
