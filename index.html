@@ -82,6 +82,9 @@ footer{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:0.78re
 <div class="row"><span class="label">IP Expanded</span><span class="value ip" id="ipExpanded">--</span></div>
 <div class="row"><span class="label">Timezone</span><span class="value" id="tz">--</span></div>
 <div class="row"><span class="label">Coordinates</span><span class="value" id="coords">--</span></div>
+<div class="row"><span class="label">Data Source</span><span class="value" id="dataSource">--</span></div>
+<div class="row"><span class="label">Data Age</span><span class="value" id="dataAge">--</span></div>
+<div class="row"><span class="label">API Status</span><span class="value" id="apiStatus">Initializing...</span></div>
 <div class="map-wrap" id="mapWrap">Map loading...</div>
 </div>
 <div class="card">
@@ -252,99 +255,127 @@ async function fetchWithTimeout(url, opts, ms) {
   }
 }
 
-function normalizeIPWhois(raw) {
-  return {
-    ip: raw.ip,
-    org: raw.connection ? raw.connection.org : '',
-    asn: raw.connection ? raw.connection.asn : '',
-    city: raw.city,
-    region: raw.region,
-    country: raw.country_code,
-    country_name: raw.country,
-    timezone: raw.timezone ? raw.timezone.id : '',
-    latitude: raw.latitude,
-    longitude: raw.longitude,
-    threat: null
-  };
+function timeAgo(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 10) return 'just now';
+  if (s < 60) return s + ' sec ago';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + ' min ago';
+  const h = Math.floor(m / 60);
+  return h + ' hour' + (h > 1 ? 's' : '') + ' ago';
 }
 
+function normalizeIPWhois(raw) {
+  return { ip: raw.ip, org: raw.connection ? raw.connection.org : '', asn: raw.connection ? raw.connection.asn : '', city: raw.city, region: raw.region, country: raw.country_code, country_name: raw.country, timezone: raw.timezone ? raw.timezone.id : '', latitude: raw.latitude, longitude: raw.longitude, threat: null };
+}
 function normalizeFreeIPAPI(raw) {
-  return {
-    ip: raw.ipAddress,
-    org: '',
-    asn: '',
-    city: raw.cityName,
-    region: raw.regionName,
-    country: raw.countryCode,
-    country_name: raw.countryName,
-    timezone: raw.timeZone,
-    latitude: raw.latitude,
-    longitude: raw.longitude,
-    threat: null
-  };
+  return { ip: raw.ipAddress, org: '', asn: '', city: raw.cityName, region: raw.regionName, country: raw.countryCode, country_name: raw.countryName, timezone: raw.timeZone, latitude: raw.latitude, longitude: raw.longitude, threat: null };
 }
 
 const IP_APIS = [
-  {
-    name: 'ipapi.co',
-    url: 'https://ipapi.co/json/',
-    normalize: d => d
-  },
-  {
-    name: 'ipwho.is',
-    url: 'https://ipwho.is/',
-    normalize: normalizeIPWhois
-  },
-  {
-    name: 'freeipapi.com',
-    url: 'https://freeipapi.com/api/json/',
-    normalize: normalizeFreeIPAPI
-  }
+  { name: 'ipapi.co', url: 'https://ipapi.co/json/', normalize: d => d },
+  { name: 'ipwho.is', url: 'https://ipwho.is/', normalize: normalizeIPWhois },
+  { name: 'freeipapi.com', url: 'https://freeipapi.com/api/json/', normalize: normalizeFreeIPAPI }
 ];
 
+let currentIPData = null;
+
 async function fetchIP() {
-  // Check session cache first
+  set('apiStatus', 'Checking current IP...');
+
+  // Step 1: Always check current IP via ipify (fast, no rate limits)
+  let currentIP = null;
   try {
-    const cached = sessionStorage.getItem('nih_ipcache');
-    if (cached) {
-      const data = JSON.parse(cached);
-      const age = Date.now() - data.ts;
-      if (age < 300000) { // 5 min cache
-        renderIP(data);
-        return;
+    const res = await fetchWithTimeout('https://api.ipify.org?format=json', { cache: 'no-store' }, 4000);
+    const d = await res.json();
+    currentIP = d.ip;
+  } catch(e) { /* ipify failed, try next */ }
+
+  if (!currentIP) {
+    try {
+      const res = await fetchWithTimeout('https://checkip.amazonaws.com/', { cache: 'no-store' }, 4000);
+      currentIP = (await res.text()).trim();
+    } catch(e) { /* amazon failed too */ }
+  }
+
+  // Step 2: Check if we have cached data for this exact IP
+  let useCache = false;
+  let cachedData = null;
+  try {
+    const raw = sessionStorage.getItem('nih_ipcache');
+    if (raw) {
+      cachedData = JSON.parse(raw);
+      if (cachedData.ip === currentIP) {
+        useCache = true;
+        set('apiStatus', 'Using cached location for IP ' + currentIP);
       }
     }
   } catch(e) {}
 
+  if (useCache && cachedData) {
+    renderIP(cachedData, true);
+    startAgeTimer(cachedData.ts);
+    return;
+  }
+
+  // Step 3: IP changed or no cache - fetch fresh location data
+  set('apiStatus', 'IP changed or no cache. Fetching location...');
+  const statusParts = [];
   let lastError = '';
+
   for (let i = 0; i < IP_APIS.length; i++) {
     const api = IP_APIS[i];
     try {
-      set('ipAddr', 'Trying ' + api.name + '...');
+      set('apiStatus', 'Trying ' + api.name + '...');
+      statusParts.push(api.name + ': trying');
       const res = await fetchWithTimeout(api.url, { cache: 'no-store' }, 6000);
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const raw = await res.json();
       const data = api.normalize(raw);
       if (!data.ip) throw new Error('No IP in response');
 
-      // Cache success
-      try { sessionStorage.setItem('nih_ipcache', JSON.stringify({ ...data, ts: Date.now() })); } catch(e) {}
+      // Success - build status string
+      const finalStatus = IP_APIS.map((a, idx) => {
+        if (idx === i) return a.name + ': OK';
+        if (idx < i) return a.name + ': failed';
+        return a.name + ': skipped';
+      }).join(' | ');
+      set('apiStatus', finalStatus);
 
-      renderIP(data);
+      // Cache with timestamp
+      data._source = api.name;
+      data.ts = Date.now();
+      try { sessionStorage.setItem('nih_ipcache', JSON.stringify(data)); } catch(e) {}
+      currentIPData = data;
+      renderIP(data, false);
+      startAgeTimer(data.ts);
       return;
     } catch (e) {
       lastError = e.message || String(e);
-      set('ipAddr', api.name + ' failed, retrying...');
-      await new Promise(r => setTimeout(r, 400));
+      statusParts.push(api.name + ': failed (' + lastError + ')');
+      set('apiStatus', statusParts.join(' | '));
+      if (i < IP_APIS.length - 1) await new Promise(r => setTimeout(r, 300));
     }
   }
 
   // All failed
-  set('ipAddr', 'Unavailable');
-  set('isp', 'All APIs failed: ' + lastError);
+  set('apiStatus', 'All APIs failed. Last: ' + lastError);
+  set('ipAddr', currentIP || 'Unavailable');
+  set('isp', 'All location APIs failed');
+  set('dataSource', 'None');
+  set('dataAge', 'Never');
 }
 
-function renderIP(data) {
+function startAgeTimer(ts) {
+  function tick() {
+    if (!currentIPData || currentIPData.ts !== ts) return;
+    set('dataAge', timeAgo(ts));
+    setTimeout(tick, 10000);
+  }
+  tick();
+}
+
+function renderIP(data, fromCache) {
   const ip = data.ip || 'Unavailable';
   detectedPublicIP = ip;
   detectedIPSources.push({ source: 'active', ip: ip });
@@ -355,6 +386,8 @@ function renderIP(data) {
   set('country', data.country_name ? data.country_name + ' (' + data.country + ')' : data.country);
   set('tz', data.timezone || 'Unknown');
   set('coords', data.latitude ? data.latitude + ', ' + data.longitude : 'Unknown');
+  set('dataSource', data._source || 'Unknown' + (fromCache ? ' (cached)' : ''));
+  set('dataAge', timeAgo(data.ts || Date.now()));
 
   const version = getIPVersion(ip);
   set('ipVersion', version);
