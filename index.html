@@ -265,16 +265,20 @@ function timeAgo(ts) {
   return h + ' hour' + (h > 1 ? 's' : '') + ' ago';
 }
 
-function normalizeIPWhois(raw) {
-  return { ip: raw.ip, org: raw.connection ? raw.connection.org : '', asn: raw.connection ? raw.connection.asn : '', city: raw.city, region: raw.region, country: raw.country_code, country_name: raw.country, timezone: raw.timezone ? raw.timezone.id : '', latitude: raw.latitude, longitude: raw.longitude, threat: null };
+function normalizeGeoJS(raw) {
+  return { ip: raw.ip, org: raw.organization || '', asn: '', city: raw.city || '', region: raw.region || '', country: raw.country_code || '', country_name: raw.country || '', timezone: raw.timezone || '', latitude: raw.latitude || 0, longitude: raw.longitude || 0, threat: null };
+}
+function normalizeIPInfo(raw) {
+  const loc = raw.loc ? raw.loc.split(',') : ['0','0'];
+  return { ip: raw.ip, org: raw.org || '', asn: '', city: raw.city || '', region: raw.region || '', country: raw.country || '', country_name: '', timezone: raw.timezone || '', latitude: parseFloat(loc[0]) || 0, longitude: parseFloat(loc[1]) || 0, threat: null };
 }
 function normalizeFreeIPAPI(raw) {
-  return { ip: raw.ipAddress, org: '', asn: '', city: raw.cityName, region: raw.regionName, country: raw.countryCode, country_name: raw.countryName, timezone: raw.timeZone, latitude: raw.latitude, longitude: raw.longitude, threat: null };
+  return { ip: raw.ipAddress, org: raw.asnOrganization || '', asn: raw.asn || '', city: raw.cityName || '', region: raw.regionName || '', country: raw.countryCode || '', country_name: raw.countryName || '', timezone: raw.timeZone || '', latitude: raw.latitude || 0, longitude: raw.longitude || 0, threat: { proxy: raw.isProxy, vpn: false, tor: false } };
 }
 
 const IP_APIS = [
-  { name: 'ipapi.co', url: 'https://ipapi.co/json/', normalize: d => d },
-  { name: 'ipwho.is', url: 'https://ipwho.is/', normalize: normalizeIPWhois },
+  { name: 'geojs.io', url: 'https://get.geojs.io/v1/ip/geo.json', normalize: normalizeGeoJS },
+  { name: 'ipinfo.io', url: 'https://ipinfo.io/json', normalize: normalizeIPInfo },
   { name: 'freeipapi.com', url: 'https://freeipapi.com/api/json/', normalize: normalizeFreeIPAPI }
 ];
 
