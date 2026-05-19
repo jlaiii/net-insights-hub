@@ -1,19 +1,19 @@
-# About Net Insights Hub
+﻿# About Net Insights Hub
 
 ## Purpose
 
-Net Insights Hub was built to give everyday users a clear, visual window into the data their browser and network connection expose to every website they visit. Most people have no idea how much information is available to sites — from their exact location and ISP to their unique browser fingerprint. This project makes that invisible data visible.
+Net Insights Hub was built to give users a clear, visual window into the data their browser and network connection expose to every website they visit. Most people are unaware how much information is available -- from exact location and ISP to a unique browser fingerprint. This project makes that invisible data visible in a clean, professional interface.
 
 ## How It Works
 
 Everything runs client-side in the browser. When you load the page:
 
-1. **IP Lookup** — The browser calls `ipapi.co/json/` to fetch your public IP and geolocation.
-2. **Fingerprinting** — JavaScript gathers canvas data, WebGL vendor/renderer, installed plugins, fonts, screen resolution, timezone, and hardware specs to create a hash. This hash can often uniquely identify your browser even without cookies.
-3. **Network Info** — The Navigator API exposes connection type, downlink estimate, and RTT.
-4. **Speed Test** — A known-size payload is downloaded from Cloudflare's edge network. The time taken is used to calculate approximate Mbps.
-5. **Privacy Checks** — A bait element tests for ad blockers. WebRTC is probed for local IP leaks.
-6. **Visit Counter** — `countapi.xyz` increments and returns a global hit count for this namespace.
+1. **IP Lookup** -- The browser calls `ipapi.co/json/` to fetch your public IP and geolocation.
+2. **Fingerprinting** -- JavaScript gathers canvas data, WebGL vendor/renderer, installed plugins, fonts, screen resolution, timezone, and hardware specs to create a hash. This hash can often uniquely identify your browser even without cookies.
+3. **Network Info** -- The Navigator API exposes connection type, downlink estimate, and RTT.
+4. **Speed Test** -- A known-size payload is downloaded from Cloudflare's edge network. The time taken is used to calculate approximate Mbps.
+5. **Privacy Checks** -- A bait element tests for ad blockers. WebRTC is probed for local IP leaks.
+6. **Visit Counter** -- `countapi.xyz` increments and returns a global hit count for this namespace.
 
 ## Privacy
 
