@@ -49,10 +49,6 @@ footer{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:0.78re
 .link-bar a{color:var(--accent);text-decoration:none;font-weight:500}
 .link-bar a:hover{text-decoration:underline}
 @media(max-width:480px){header h1{font-size:1.7rem}.grid{grid-template-columns:1fr}.link-bar{flex-direction:column;gap:0.25rem}}
-.ip-wrap{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;justify-content:flex-end}
-.ip-wrap .value.ip{white-space:nowrap}
-.ip-copy{cursor:pointer;background:transparent;border:1px solid rgba(79,193,233,0.25);color:var(--accent);padding:0.15rem 0.4rem;border-radius:0.25rem;font-size:0.7rem;opacity:0.7;transition:opacity .15s}
-.ip-copy:hover{opacity:1}
 .visit-tip{position:absolute;top:120%;left:50%;transform:translateX(-50%);width:260px;background:var(--surface);border:1px solid var(--border);border-radius:0.5rem;padding:0.75rem;font-size:0.8rem;color:var(--muted);box-shadow:0 8px 24px rgba(0,0,0,0.3);opacity:0;pointer-events:none;transition:opacity .2s;z-index:100;text-align:center}
 .visit-tip.show{opacity:1;pointer-events:auto}
 #visitCounter:hover .visit-tip{opacity:1;pointer-events:auto}
@@ -77,13 +73,13 @@ footer{text-align:center;padding:2.5rem 1rem;color:var(--muted);font-size:0.78re
 <div class="grid">
 <div class="card" id="ipCard">
 <h2><span class="icon">IP</span> IP & Location</h2>
-<div class="row"><span class="label">IP Address</span><span class="ip-wrap"><span class="value ip" id="ipAddr">--</span><button class="ip-copy" onclick="copyIP()" title="Copy IP">Copy</button></span></div>
+<div class="row"><span class="label">IP Address</span><span class="value ip" id="ipAddr">--</span></div>
 <div class="row"><span class="label">ISP / Org</span><span class="value" id="isp">--</span></div>
 <div class="row"><span class="label">City</span><span class="value" id="city">--</span></div>
 <div class="row"><span class="label">Region</span><span class="value" id="region">--</span></div>
 <div class="row"><span class="label">Country</span><span class="value" id="country">--</span></div>
 <div class="row"><span class="label">IP Version</span><span class="value" id="ipVersion">--</span></div>
-<div class="row" id="ipExpandedRow" style="display:none"><span class="label">IP Expanded</span><span class="value ip" id="ipExpanded">--</span></div>
+<div class="row"><span class="label">IP Expanded</span><span class="value ip" id="ipExpanded">--</span></div>
 <div class="row"><span class="label">Timezone</span><span class="value" id="tz">--</span></div>
 <div class="row"><span class="label">Coordinates</span><span class="value" id="coords">--</span></div>
 <div class="map-wrap" id="mapWrap">Map loading...</div>
@@ -209,12 +205,10 @@ const set = (id, text, cls) => { const el = $(id); if (!el) return; el.textConte
 const sessionStart = new Date();
 
 function expandIPv6(ip) {
-  if (!ip || ip.indexOf(':') === -1) return null;
+  if (!ip || ip.indexOf(':') === -1) return ip;
   let groups = ip.split(':');
   let emptyIndex = groups.indexOf('');
-  let needsExp = false;
   if (emptyIndex !== -1) {
-    needsExp = true;
     let zeros = 8 - groups.length + 1;
     let expanded = [];
     for (let i = 0; i < groups.length; i++) {
@@ -226,11 +220,7 @@ function expandIPv6(ip) {
     }
     return expanded.join(':');
   }
-  // Check if any group needs zero-padding
-  const padded = groups.map(g => g.padStart(4, '0'));
-  const result = padded.join(':');
-  if (result !== ip) return result;
-  return null; // Already fully expanded
+  return groups.map(g => g.padStart(4, '0')).join(':');
 }
 function getIPVersion(ip) {
   if (!ip) return 'Unknown';
@@ -269,22 +259,12 @@ async function fetchIP() {
 
     if (version === 'IPv6') {
       const expanded = expandIPv6(ip);
+      set('ipExpanded', expanded, 'ip');
       const mapped = getIPv4FromMapped(ip);
-      if (expanded) {
-        $('ipExpandedRow').style.display = 'flex';
-        if (mapped) {
-          set('ipExpanded', expanded + ' (mapped IPv4: ' + mapped + ')', 'ip');
-        } else {
-          set('ipExpanded', expanded, 'ip');
-        }
-      } else if (mapped) {
-        $('ipExpandedRow').style.display = 'flex';
-        set('ipExpanded', ip + ' (mapped IPv4: ' + mapped + ')', 'ip');
-      } else {
-        $('ipExpandedRow').style.display = 'none';
+      if (mapped) {
+        set('ipExpanded', expanded + ' (mapped IPv4: ' + mapped + ')', 'ip');
       }
     } else {
-      $('ipExpandedRow').style.display = 'none';
       set('ipExpanded', ip, 'ip');
     }
 
